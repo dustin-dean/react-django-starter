@@ -3,6 +3,25 @@ import axios from 'axios'
 // Your Django backend URL
 const API_BASE_URL = 'http://localhost:8000'
 
+// Event system for auth state changes
+const authEventListeners: Array<() => void> = []
+
+export const onAuthError = (callback: () => void) => {
+  authEventListeners.push(callback)
+  
+  // Return cleanup function
+  return () => {
+    const index = authEventListeners.indexOf(callback)
+    if (index > -1) {
+      authEventListeners.splice(index, 1)
+    }
+  }
+}
+
+const triggerAuthError = () => {
+  authEventListeners.forEach(callback => callback())
+}
+
 // Create axios instance
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -50,9 +69,10 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${access}`
         return api(originalRequest)
       } catch (refreshError) {
-        // Refresh failed, clear tokens
+        // Refresh failed, clear tokens and notify listeners
         localStorage.removeItem('access-token')
         localStorage.removeItem('refresh-token')
+        triggerAuthError() // ← Notify React to update state!
         return Promise.reject(refreshError)
       }
     }

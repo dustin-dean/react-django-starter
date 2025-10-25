@@ -3,9 +3,11 @@ import axios from 'axios'
 import { api } from '@/lib/api'
 
 interface User {
-  id: string
-  username: string
+  id: number
   email: string
+  username: string
+  first_name: string
+  last_name: string
 }
 
 interface AuthState {
@@ -49,9 +51,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(data)
           setIsAuthenticated(true)
         } catch (refreshError) {
-          // Refresh failed, clear everything
-          localStorage.removeItem('access-token')
-          localStorage.removeItem('refresh-token')
+          // Refresh failed, logout completely
+          logout()
         }
       } finally {
         setIsLoading(false)
@@ -100,6 +101,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsAuthenticated(false)
     localStorage.removeItem('access-token')
     localStorage.removeItem('refresh-token')
+    
+    // Optionally redirect to login page
+    // window.location.href = '/login'
   }
 
   return (
