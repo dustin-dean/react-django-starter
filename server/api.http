@@ -1,12 +1,12 @@
 GET http://127.0.0.1:8000/auth/users/me HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxMzYwOTA3LCJpYXQiOjE3NjEzNTczMDcsImp0aSI6IjU3NmZiOTcyOGQyYTQ0ZGVhNTdjZDY4YTE1YzhiMjhlIiwidXNlcl9pZCI6IjEifQ.7SxgG2N2Lk5pmBJ8YifhxlFbPaFTfVmzdwLds-70WEw
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxMzYyNjQ5LCJpYXQiOjE3NjEzNTkwNDksImp0aSI6IjRkMGJlMjhiMjU5YTRlNjRhZWY3NTk5ZmVlYzg5NDEzIiwidXNlcl9pZCI6IjEifQ.JqAdFQnX34KoRRYslgUymcDOZsA3yZK8FiuDbsVSNRU
 
 ###
 POST http://127.0.0.1:8000/auth/jwt/verify HTTP/1.1
 Content-Type: application/json
 
 {
-    "token": "sdfsdfsdfs"
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxMzY0OTAwLCJpYXQiOjE3NjEzNjEzMDAsImp0aSI6IjA2ZTBjMjYwMzI1MDRiYzliZWViNjRlZWM0ODBjZDE4IiwidXNlcl9pZCI6IjEifQ.JIBNSZKjPuOBSLlncMDBONAgko-6L0cUSo68os4w58g"
 }
 
 ###
