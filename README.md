@@ -2,12 +2,126 @@ Welcome to your new TanStack app!
 
 # Getting Started
 
-To run this application:
+## Prerequisites
 
+- Node.js (v18 or higher)
+- Python 3.12+
+
+## Backend Setup
+
+1. Navigate to the server directory:
+```bash
+cd server
+```
+
+2. Create a virtual environment and install dependencies:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install django djangorestframework djoser django-cors-headers python-dotenv
+```
+
+3. Create a `.env` file from the sample:
+```bash
+cp .env.smaple .env
+```
+
+4. Run migrations:
+```bash
+python manage.py migrate
+```
+
+5. Create a superuser (optional):
+```bash
+python manage.py createsuperuser
+```
+
+6. Start the Django development server:
+```bash
+python manage.py runserver
+```
+
+The backend will be available at `http://localhost:8000`.
+
+## Frontend Setup
+
+1. Install dependencies:
 ```bash
 npm install
-npm run start
 ```
+
+2. Create a `.env` file from the example:
+```bash
+cp .env.example .env
+```
+
+3. Start the development server:
+```bash
+npm run dev
+```
+
+The frontend will be available at `http://localhost:3000`.
+
+# Authentication
+
+This application uses session-based authentication with Django REST Framework and Djoser.
+
+## How It Works
+
+- The backend manages sessions using Django's session framework
+- Cookies are automatically handled by the browser
+- CSRF tokens are used for security on state-changing operations
+
+## Available Endpoints
+
+### Backend API Endpoints
+
+- `POST /api/login/` - Login with username and password
+- `POST /api/logout/` - Logout (requires authentication)
+- `GET /api/user/` - Get current user details (requires authentication)
+- `GET /api/csrf/` - Get CSRF token
+- `POST /auth/users/` - Register a new user (Djoser endpoint)
+
+### Frontend Auth Service
+
+The frontend provides an `authService` with the following methods:
+
+```typescript
+import { authService } from '@/services/auth'
+
+// Login
+await authService.login({ username, password })
+
+// Logout
+await authService.logout()
+
+// Register
+await authService.register({ username, email, password, re_password })
+
+// Get current user
+await authService.getCurrentUser()
+
+// Get CSRF token
+await authService.getCSRFToken()
+```
+
+### Auth Context Hook
+
+Use the `useAuth` hook in your components:
+
+```typescript
+import { useAuth } from '@/context/auth'
+
+function MyComponent() {
+  const { user, isAuthenticated, login, logout, register } = useAuth()
+  
+  // Use authentication state and methods
+}
+```
+
+## Login Page
+
+A login page component is available at `src/pages/LoginPage.tsx`. You can add it to your routes to provide a login interface.
 
 # Building For Production
 
