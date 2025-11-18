@@ -84,19 +84,71 @@ USE_TZ = True
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# CORS Settings
-CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
-CORS_ALLOW_CREDENTIALS = True
+# =============================================================================
+# SESSION CONFIGURATION
+# =============================================================================
+# Session-based authentication uses Django's built-in session framework.
+# Sessions are stored in the database (single-server deployment).
+# The sessionid cookie is set by Django's login() function automatically.
 
-# REST Framework Settings
+SESSION_ENGINE = "django.contrib.sessions.backends.db"  # Store sessions in database
+
+# Session cookie settings for security
+# These control how the browser handles the sessionid cookie
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 7  # 7 days in seconds
+SESSION_COOKIE_HTTPONLY = True  # Prevents JavaScript access (XSS protection)
+SESSION_COOKIE_SAMESITE = "Lax"  # CSRF protection (allows GET from other sites)
+
+# Environment-aware secure cookie setting
+# In production (DEBUG=False), require HTTPS for session cookies
+# In development (DEBUG=True), allow HTTP for local testing
+SESSION_COOKIE_SECURE = not DEBUG  # Only send cookie over HTTPS in production
+
+# Session persistence settings
+SESSION_SAVE_EVERY_REQUEST = False  # Don't update session on every request
+SESSION_COOKIE_NAME = "sessionid"  # Standard Django session cookie name
+
+# =============================================================================
+# CSRF CONFIGURATION  
+# =============================================================================
+# CSRF protection works with session authentication
+# Frontend must include CSRF token from cookie in requests
+
+CSRF_COOKIE_HTTPONLY = False  # JavaScript needs to read this for CSRF token
+CSRF_COOKIE_SAMESITE = "Lax"  # Same as session cookie
+CSRF_COOKIE_SECURE = not DEBUG  # Match session cookie security
+
+# For production deployments, configure trusted origins for CSRF
+# This should match your frontend domain(s)
+CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if os.getenv("CSRF_TRUSTED_ORIGINS") else []
+
+# =============================================================================
+# CORS SETTINGS
+# =============================================================================
+# CORS must be configured to allow credentials (cookies) from frontend
+CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+CORS_ALLOW_CREDENTIALS = True  # Required for session cookies to work
+
+# =============================================================================
+# REST FRAMEWORK SETTINGS
+# =============================================================================
+# Configure DRF to use both session and JWT authentication
+# Session auth is primary for web clients, JWT kept for compatibility
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",  # Primary: session-based
+        "rest_framework_simplejwt.authentication.JWTAuthentication",  # Secondary: JWT for API clients
     ),
+    # Default permission is authenticated users only
+    # Individual views can override this as needed
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
 }
 
-# JWT Settings
+# =============================================================================
+# JWT SETTINGS (Optional - kept for API clients)
+# =============================================================================
+# JWT authentication is optional and kept for non-browser API clients
+# Browser clients should use session authentication instead
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
@@ -106,7 +158,11 @@ SIMPLE_JWT = {
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
 
-# Djoser Settings
+# =============================================================================
+# DJOSER SETTINGS (User Registration)
+# =============================================================================
+# Djoser provides user registration endpoints
+# Authentication endpoints are custom (see accounts.views)
 DJOSER = {
     "USER_CREATE_PASSWORD_RETYPE": True,
     "SEND_ACTIVATION_EMAIL": False,
