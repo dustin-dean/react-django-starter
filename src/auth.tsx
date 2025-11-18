@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import axios from 'axios'
-import { api } from '@/lib/api'
+import { api, onAuthError } from '@/lib/api'
 
 interface User {
   id: number
@@ -14,7 +14,7 @@ interface AuthState {
   isAuthenticated: boolean
   user: User | null
   login: (username: string, password: string) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined)
@@ -27,32 +27,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Restore auth state on app load
   useEffect(() => {
     const restoreAuthState = async () => {
-      const accessToken = localStorage.getItem('access-token')
-      const refreshToken = localStorage.getItem('refresh-token')
-      
-      if (!accessToken || !refreshToken) {
-        setIsLoading(false)
-        return
-      }
-
       try {
-        // Verify the access token
-        await api.post('/auth/jwt/verify/', { token: accessToken })
+        // Try to verify the access token from cookie
+        await api.post('/auth/jwt/verify/')
         
         // Token is valid, fetch user data
         const { data } = await api.get('/auth/users/me/')
         setUser(data)
         setIsAuthenticated(true)
       } catch (error) {
-        // Token invalid or expired, the interceptor will handle refresh
-        // If refresh also fails, tokens will be cleared
+        // Token invalid or expired, try to refresh
         try {
+          await api.post('/auth/jwt/refresh/')
+          // Refresh successful, fetch user data
           const { data } = await api.get('/auth/users/me/')
           setUser(data)
           setIsAuthenticated(true)
         } catch (refreshError) {
-          // Refresh failed, logout completely
-          logout()
+          // Both verify and refresh failed, user is not authenticated
+          setUser(null)
+          setIsAuthenticated(false)
         }
       } finally {
         setIsLoading(false)
@@ -60,6 +54,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     restoreAuthState()
+  }, [])
+
+  // Listen for auth errors (e.g., token refresh failures)
+  useEffect(() => {
+    const cleanup = onAuthError(() => {
+      setUser(null)
+      setIsAuthenticated(false)
+    })
+    return cleanup
   }, [])
 
   // Show loading state while checking auth
@@ -73,20 +76,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (username: string, password: string) => {
     try {
-      // Call Djoser's JWT create endpoint
-      const { data: tokens } = await api.post('/auth/jwt/create/', {
+      // Call our custom cookie-based JWT create endpoint
+      const { data } = await api.post('/auth/jwt/create/', {
         username,
         password,
       })
       
-      // Store both tokens
-      localStorage.setItem('access-token', tokens.access)
-      localStorage.setItem('refresh-token', tokens.refresh)
-
-      // Fetch user data
-      const { data: userData } = await api.get('/auth/users/me/')
-      setUser(userData)
-      setIsAuthenticated(true)
+      // The backend sets cookies automatically
+      // Extract user data from response
+      if (data.user) {
+        setUser(data.user)
+        setIsAuthenticated(true)
+      } else {
+        // Fallback: fetch user data if not in response
+        const { data: userData } = await api.get('/auth/users/me/')
+        setUser(userData)
+        setIsAuthenticated(true)
+      }
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const message = error.response?.data?.detail || 'Authentication failed'
@@ -96,14 +102,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const logout = () => {
-    setUser(null)
-    setIsAuthenticated(false)
-    localStorage.removeItem('access-token')
-    localStorage.removeItem('refresh-token')
-    
-    // Optionally redirect to login page
-    // window.location.href = '/login'
+  const logout = async () => {
+    try {
+      // Call backend logout endpoint to blacklist token
+      await api.post('/auth/logout/')
+    } catch (error) {
+      // Continue with logout even if backend call fails
+      console.error('Logout error:', error)
+    } finally {
+      // Clear local state
+      setUser(null)
+      setIsAuthenticated(false)
+      
+      // Cookies are cleared by the backend response
+    }
   }
 
   return (

@@ -2,12 +2,39 @@ Welcome to your new TanStack app!
 
 # Getting Started
 
-To run this application:
+## Frontend Setup
+
+To run the frontend application:
 
 ```bash
 npm install
-npm run start
+npm run dev
 ```
+
+The frontend will start on http://localhost:3000
+
+## Backend Setup
+
+The backend is a Django REST API with JWT authentication:
+
+```bash
+cd server
+pip install django djangorestframework djangorestframework-simplejwt djoser django-cors-headers python-dotenv django-filter
+python manage.py migrate
+python manage.py runserver
+```
+
+The backend will start on http://localhost:8000
+
+## Authentication
+
+This application uses **cookie-based JWT authentication** for enhanced security. See [AUTHENTICATION.md](./AUTHENTICATION.md) for detailed documentation on:
+- How authentication works
+- API endpoints
+- Frontend usage examples
+- Security features
+- Configuration for production
+- Troubleshooting
 
 # Building For Production
 

@@ -10,3 +10,10 @@ count.txt
 .wrangler
 .venv
 db.sqlite3
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python

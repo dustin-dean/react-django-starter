@@ -22,27 +22,41 @@ const triggerAuthError = () => {
   authEventListeners.forEach(callback => callback())
 }
 
+// Helper to get CSRF token from cookie
+const getCsrfToken = (): string | null => {
+  const name = 'csrftoken'
+  const cookies = document.cookie.split(';')
+  for (let cookie of cookies) {
+    const trimmed = cookie.trim()
+    if (trimmed.startsWith(name + '=')) {
+      return trimmed.substring(name.length + 1)
+    }
+  }
+  return null
+}
+
 // Create axios instance
 export const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Enable sending cookies with requests
 })
 
-// Request interceptor - automatically add access token to requests
+// Request interceptor - add CSRF token to requests
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access-token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+    const csrfToken = getCsrfToken()
+    if (csrfToken && ['post', 'put', 'patch', 'delete'].includes(config.method?.toLowerCase() || '')) {
+      config.headers['X-CSRFToken'] = csrfToken
     }
     return config
   },
   (error) => Promise.reject(error)
 )
 
-// Response interceptor - automatically refresh token on 401
+// Response interceptor - handle 401 errors
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -52,27 +66,15 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
 
-      const refreshToken = localStorage.getItem('refresh-token')
-      if (!refreshToken) {
-        return Promise.reject(error)
-      }
-
       try {
-        const response = await axios.post(`${API_BASE_URL}/auth/jwt/refresh/`, {
-          refresh: refreshToken,
-        })
-
-        const { access } = response.data
-        localStorage.setItem('access-token', access)
-
-        // Retry original request with new token
-        originalRequest.headers.Authorization = `Bearer ${access}`
+        // Try to refresh the token using the refresh cookie
+        await api.post('/auth/jwt/refresh/')
+        
+        // Retry the original request
         return api(originalRequest)
       } catch (refreshError) {
-        // Refresh failed, clear tokens and notify listeners
-        localStorage.removeItem('access-token')
-        localStorage.removeItem('refresh-token')
-        triggerAuthError() // ← Notify React to update state!
+        // Refresh failed, notify listeners to update auth state
+        triggerAuthError()
         return Promise.reject(refreshError)
       }
     }
