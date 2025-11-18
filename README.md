@@ -1,21 +1,154 @@
-Welcome to your new TanStack app! 
+# React + Django Starter with Session Authentication
 
-# Getting Started
+A modern full-stack starter template featuring React with TanStack Router on the frontend and Django REST Framework on the backend, with comprehensive session-based authentication.
 
-To run this application:
+## Features
 
+- ⚛️ **React 19** with TanStack Router for routing
+- 🎨 **Tailwind CSS** for styling with Shadcn UI components
+- 🐍 **Django 5** with Django REST Framework
+- 🔐 **Session-based Authentication** with HttpOnly cookies
+- 🔒 **Security-first** approach (CSRF, XSS, SameSite protection)
+- 🐳 **Docker-ready** for easy deployment
+- 📝 **Comprehensive documentation** for junior developers
+- 🧪 **Testing setup** with Vitest
+
+## Documentation
+
+- **[Authentication Guide](./AUTHENTICATION.md)** - Complete guide to session-based authentication
+- **[Deployment Guide](./DEPLOYMENT.md)** - Docker deployment instructions
+- **[API Reference](./AUTHENTICATION.md#api-endpoints)** - Backend API documentation
+
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20+
+- Python 3.11+
+- pip or uv
+
+### Development Setup
+
+1. **Clone the repository**:
 ```bash
-npm install
-npm run start
+git clone <repository-url>
+cd react-django-starter
 ```
 
-# Building For Production
+2. **Install frontend dependencies**:
+```bash
+npm install
+```
+
+3. **Install backend dependencies**:
+```bash
+cd server
+pip install -e .
+```
+
+4. **Set up environment variables**:
+```bash
+# In server directory, copy the example env file
+cp .env.example .env
+# Edit .env with your settings (SECRET_KEY, etc.)
+```
+
+5. **Run database migrations**:
+```bash
+cd server
+python manage.py migrate
+```
+
+6. **Create a superuser** (for Django admin):
+```bash
+python manage.py createsuperuser
+```
+
+7. **Start the development servers**:
+
+In one terminal (backend):
+```bash
+cd server
+python manage.py runserver
+```
+
+In another terminal (frontend):
+```bash
+npm run dev
+```
+
+8. **Access the application**:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000/api/
+- Django Admin: http://localhost:8000/admin/
+
+## Authentication
+
+This application uses **session-based authentication** with Django sessions and HttpOnly cookies. This approach is more secure than JWT for browser-based applications because:
+
+- **HttpOnly cookies** prevent JavaScript access (XSS protection)
+- **Browser handles cookies automatically** (no manual token management)
+- **Built-in CSRF protection** with Django middleware
+- **Secure by default** in production (HTTPS-only cookies)
+
+### How It Works
+
+1. User logs in with username/password
+2. Django creates a session in the database
+3. Django sets a `sessionid` cookie (HttpOnly, Secure in production)
+4. Browser automatically includes cookie in all requests
+5. Django validates session on each request
+
+See the [Authentication Guide](./AUTHENTICATION.md) for detailed information.
+
+## Project Structure
+
+```
+.
+├── src/                      # React frontend
+│   ├── context/             # React contexts (auth, etc.)
+│   ├── services/            # API service functions
+│   ├── pages/               # Page components
+│   ├── routes/              # TanStack Router routes
+│   └── lib/                 # Utilities and API client
+├── server/                   # Django backend
+│   ├── accounts/            # User authentication app
+│   ├── config/              # Django settings
+│   └── manage.py            # Django management script
+├── AUTHENTICATION.md         # Authentication documentation
+├── DEPLOYMENT.md            # Deployment guide
+└── README.md                # This file
+```
+
+## Available Scripts
+
+### Frontend
+
+```bash
+npm run dev          # Start development server (port 3000)
+npm run build        # Build for production
+npm run test         # Run tests with Vitest
+```
+
+### Backend
+
+```bash
+python manage.py runserver        # Start development server (port 8000)
+python manage.py migrate          # Run database migrations
+python manage.py createsuperuser  # Create admin user
+python manage.py test             # Run tests
+python manage.py check            # Check for issues
+```
+
+## Building For Production
 
 To build this application for production:
 
 ```bash
 npm run build
 ```
+
+See the [Deployment Guide](./DEPLOYMENT.md) for complete production deployment instructions using Docker.
 
 ## Testing
 
