@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     # Third party
     "rest_framework",
     "rest_framework.authtoken",
+    "rest_framework_simplejwt.token_blacklist",  # For token blacklisting
     "djoser",
     "corsheaders",
     # Local
@@ -91,19 +92,27 @@ CORS_ALLOW_CREDENTIALS = True
 # REST Framework Settings
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "accounts.authentication.CookieJWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
 }
 
 # JWT Settings
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    # Cookie-based authentication settings
+    "AUTH_COOKIE": "access_token",
+    "AUTH_COOKIE_REFRESH": "refresh_token",
+    "AUTH_COOKIE_SECURE": not DEBUG,  # HTTPS only in production
+    "AUTH_COOKIE_HTTP_ONLY": True,  # Not accessible via JavaScript
+    "AUTH_COOKIE_PATH": "/",
+    "AUTH_COOKIE_SAMESITE": "Lax" if DEBUG else "Strict",  # CSRF protection
+    "AUTH_COOKIE_DOMAIN": None,  # Use default domain
 }
 
 # Djoser Settings
@@ -119,3 +128,13 @@ DJOSER = {
         "current_user": "accounts.serializers.UserSerializer",
     },
 }
+
+# Cookie and CSRF Security Settings
+csrf_origins_str = os.getenv("CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [origin for origin in csrf_origins_str.split(",") if origin]
+CSRF_COOKIE_SECURE = not DEBUG  # HTTPS only in production
+CSRF_COOKIE_HTTPONLY = False  # Must be False for CSRF token to be readable by JS
+CSRF_COOKIE_SAMESITE = "Lax" if DEBUG else "Strict"
+SESSION_COOKIE_SECURE = not DEBUG  # HTTPS only in production
+SESSION_COOKIE_SAMESITE = "Lax" if DEBUG else "Strict"
+SESSION_COOKIE_HTTPONLY = True
