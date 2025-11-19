@@ -5,6 +5,9 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
 
+// Import AuthProvider
+import { AuthProvider } from '@/context/auth'
+
 import './styles.css'
 import reportWebVitals from './reportWebVitals.ts'
 
@@ -31,7 +34,9 @@ if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
   root.render(
     <StrictMode>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </StrictMode>,
   )
 }
